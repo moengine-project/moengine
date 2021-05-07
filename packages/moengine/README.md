@@ -1,6 +1,6 @@
-# moengine_core
+# moengine
 
-moengine core
+A new Flutter project.
 
 ## Getting Started
 

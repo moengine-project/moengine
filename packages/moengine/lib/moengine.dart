@@ -1,4 +1,6 @@
-library moengine_core;
+library moengine;
+
+export 'src/type_map.dart';
 
 /// A Calculator.
 class Calculator {

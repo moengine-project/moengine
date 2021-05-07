@@ -81,10 +81,10 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.3.0"
-  moengine_core:
+  moengine:
     dependency: "direct main"
     description:
-      path: "../moengine_core"
+      path: "../moengine"
       relative: true
     source: path
     version: "0.0.1"
