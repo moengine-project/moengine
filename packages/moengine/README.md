@@ -1,6 +1,6 @@
 # moengine
 
-A new Flutter project.
+moengine
 
 ## Getting Started
 
