@@ -1,4 +1,2 @@
 /// 组件
-abstract class Component{
-
-}
+abstract class Component {}

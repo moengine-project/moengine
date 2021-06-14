@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
+
 /// 类型扩展
 extension TypeExt on Type {
   /// 获取当前类型mask
-  int? get typeMask => TypeMap.getMask(this);
+  int? getTypeMask(TypeMapFactory factory) => factory.getMask(this);
 }
 
 /// index mask
@@ -10,13 +12,26 @@ const _indexMask = 0xf << 60;
 /// bit mask
 const _bitMask = ~_indexMask;
 
-/// 类型map,只能接受注册的类型
-class TypeMap extends Iterable<Object> {
-  /// 已注册type,最多960-16个
-  static final Map<Type, int> _registeredMap = {};
+/// type map工厂
+@immutable
+class TypeMapFactory {
+  /// 已注册type,最多960个
+  final Map<Type, int> _registeredMap = {};
+
+  TypeMapFactory();
+
+  /// 使用初始的类型创建工厂
+  TypeMapFactory.fromTypes(Iterable<Type> types) {
+    for (final Type type in types) {
+      registerType(type);
+    }
+  }
+
+  /// 生成TypeMap对象
+  TypeMap newMap() => TypeMap._new(this);
 
   /// 类型注册方法
-  static int registerType<T>([Type? type]) {
+  int registerType<T>([Type? type]) {
     final int? oldMask = getMask<T>(type);
     if (oldMask != null) {
       return oldMask;
@@ -34,12 +49,12 @@ class TypeMap extends Iterable<Object> {
   }
 
   /// 获取类型mask
-  static int? getMask<T>([Type? type]) {
+  int? getMask<T>([Type? type]) {
     return _registeredMap[type ?? T];
   }
 
   /// 获取类型mask列表
-  static List<int> getMasks(List<Type> types, [bool merge = true]) {
+  Iterable<int> getMasks(Iterable<Type> types, [bool merge = true]) {
     List<int>? masks;
     Map<int, int>? maskMap;
     if (merge) {
@@ -48,7 +63,7 @@ class TypeMap extends Iterable<Object> {
       masks = [];
     }
     for (final Type type in types) {
-      final int? mask = type.typeMask;
+      final int? mask = type.getTypeMask(this);
       if (mask == null) {
         throw Exception('$type is unregistered!');
       }
@@ -63,21 +78,27 @@ class TypeMap extends Iterable<Object> {
     if (masks != null) {
       return masks;
     } else if (maskMap != null) {
-      return maskMap.values.toList();
+      return maskMap.values;
     }
     return [];
   }
 
   /// 合并mask
-  static List<int> mergeMasks(List<int> masks) {
+  Iterable<int> mergeMasks(Iterable<int> masks) {
     final Map<int, int> maskMap = {};
     for (final int mask in masks) {
       final int index = mask >> 60;
       final int oldMask = maskMap[index] ?? 0;
       maskMap[index] = oldMask | mask;
     }
-    return maskMap.values.toList();
+    return maskMap.values;
   }
+}
+
+/// 类型map,只能接受注册的类型
+class TypeMap extends Iterable<Object> {
+  /// 当前map所属工厂
+  final TypeMapFactory factory;
 
   /// 当前存储类型对象
   final Map<Type, Object> _map = {};
@@ -88,10 +109,19 @@ class TypeMap extends Iterable<Object> {
   @override
   Iterator<Object> get iterator => _map.values.iterator;
 
+  TypeMap._new(this.factory);
+
+  /// 存放对象
+  void puts(Iterable<Object> values) {
+    for (final Object value in values) {
+      put(value);
+    }
+  }
+
   /// 存放对象
   void put(Object value) {
     final Type type = value.runtimeType;
-    final int? mask = type.typeMask;
+    final int? mask = type.getTypeMask(factory);
     if (mask == null) {
       throw Exception('$type is unregistered!');
     }
@@ -109,7 +139,7 @@ class TypeMap extends Iterable<Object> {
   /// 移除对象
   T? remove<T>([Type? type]) {
     type ??= T;
-    int? mask = type.typeMask;
+    int? mask = type.getTypeMask(factory);
     if (mask == null) {
       return null;
     }
@@ -131,7 +161,7 @@ class TypeMap extends Iterable<Object> {
 
   /// 根据types查找是否包含
   bool containsByTypes(List<Type> types) {
-    return containsByMasks(getMasks(types));
+    return containsByMasks(factory.getMasks(types));
   }
 
   /// 根据mask查找是否包含
@@ -145,7 +175,7 @@ class TypeMap extends Iterable<Object> {
   }
 
   /// 根据mask列表查找是否包含
-  bool containsByMasks(List<int> masks) {
+  bool containsByMasks(Iterable<int> masks) {
     return masks.every((mask) => containsByMask(mask));
   }
 }
