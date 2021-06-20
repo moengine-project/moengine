@@ -6,9 +6,13 @@ void main() {
     const types = [A, B, C, D, E, F, G, H, I, J, K, L, M, N];
     final TypeMapFactory factory = TypeMapFactory.fromTypes(types);
     final TypeMap typeMap = factory.newMap();
+    final objectsA = [H(), I(), J(), K(), L(), M(), N()];
+    final typesA = [I, J, H, K, M, N, L];
+    final masks = factory.getMasks(typesA);
+    typeMap.puts(objectsA);
     test('puts', () {
       typeMap.puts([A(), E(), D(), F(), G()]);
-      expect(typeMap.length, 5);
+      expect(typeMap.length, 12);
     });
     test('get', () {
       expect(typeMap.get<F>()?.runtimeType, F);
@@ -19,11 +23,22 @@ void main() {
       typeMap.remove<F>();
       expect(typeMap.get<F>(), null);
       expect(typeMap.get<D>()?.runtimeType, D);
-      expect(typeMap.length, 4);
+      expect(typeMap.length, 11);
     });
     test('contains', () {
       expect(typeMap.containsByTypes([D, E, G]), true);
       expect(typeMap.containsByTypes([D, F, A]), false);
+    });
+    group('containsAll', () {
+      test('mask', () {
+        expect(typeMap.containsByMasks(masks), true);
+      });
+      test('for', () {
+        expect(typesA.every((type) => typeMap.containsByType(type)), true);
+      });
+      test('type', () {
+        expect(typeMap.containsByTypes(typesA), true);
+      });
     });
   });
 }
